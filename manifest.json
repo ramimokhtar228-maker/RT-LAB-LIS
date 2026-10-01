@@ -1,0 +1,41 @@
+{
+  "name": "معامل رامي مختار للتحاليل التشخيصية RT",
+  "short_name": "معامل رامي مختار",
+  "description": "المنظومة الإلكترونية المتكاملة لمعامل د. رامي مختار للتحاليل التشخيصية - شبرا الخيمة",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#4c0519",
+  "theme_color": "#881337",
+  "orientation": "any",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/rt_logo.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "طلب فحص جديد",
+      "short_name": "طلب فحص",
+      "url": "/?action=new-order",
+      "icons": [{ "src": "/logo.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "بوابة المرضى والحجز",
+      "short_name": "حجز مريض",
+      "url": "/?view=portal",
+      "icons": [{ "src": "/logo.jpg", "sizes": "192x192" }]
+    }
+  ]
+}
