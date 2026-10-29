@@ -70,6 +70,19 @@ export async function exportReportToPptx(
   const lightBg = 'F8FAFC';
   const accentRed = '991B1B';
 
+  const pathologist =
+    settings.signatures?.find((s) => s.role === 'Pathologist' && s.show) ||
+    settings.signatures?.[0] || {
+      name: settings.pathologistName || 'أ.د / رامي مختار',
+      title: settings.pathologistTitle || 'استشاري الباثولوجيا الإكلينيكية - طب قصر العيني',
+    };
+
+  const chemist =
+    settings.signatures?.find((s) => s.role === 'Chemist' && s.show) || {
+      name: settings.chemistName || 'كيميائي / محمود الشناوي',
+      title: settings.chemistTitle || 'أخصائي الكيمياء الحيوية الطبية',
+    };
+
   // ================= SLIDE 1: Title & Patient Encounter =================
   const slide1 = pptx.addSlide();
   slide1.background = { color: darkNavy };
@@ -155,7 +168,7 @@ export async function exportReportToPptx(
       { text: 'Clinical Notes:', options: { bold: true, color: '94A3B8' } },
       { text: encounter.patient.clinicalNotes || 'Routine Diagnostic Investigation', options: { color: 'E2E8F0' } },
       { text: 'Consultant:', options: { bold: true, color: '94A3B8' } },
-      { text: settings.pathologistName, options: { bold: true, color: 'FDA4AF' } },
+      { text: pathologist.name, options: { bold: true, color: 'FDA4AF' } },
     ],
   ];
 
@@ -436,7 +449,7 @@ export async function exportReportToPptx(
     bold: true,
     color: '94A3B8',
   });
-  finalSlide.addText(settings.chemistName, {
+  finalSlide.addText(chemist.name, {
     x: 1.8,
     y: 3.3,
     w: 4.2,
@@ -445,7 +458,7 @@ export async function exportReportToPptx(
     bold: true,
     color: 'FFFFFF',
   });
-  finalSlide.addText(settings.chemistTitle, {
+  finalSlide.addText(chemist.title, {
     x: 1.8,
     y: 3.8,
     w: 4.2,
@@ -473,7 +486,7 @@ export async function exportReportToPptx(
     bold: true,
     color: 'FDA4AF',
   });
-  finalSlide.addText(settings.pathologistName, {
+  finalSlide.addText(pathologist.name, {
     x: 7.2,
     y: 3.3,
     w: 4.2,
@@ -482,7 +495,7 @@ export async function exportReportToPptx(
     bold: true,
     color: 'FFFFFF',
   });
-  finalSlide.addText(settings.pathologistTitle, {
+  finalSlide.addText(pathologist.title, {
     x: 7.2,
     y: 3.8,
     w: 4.2,

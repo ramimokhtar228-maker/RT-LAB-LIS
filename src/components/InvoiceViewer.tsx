@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PatientEncounter, LabSettings } from '../types/lab';
 import { Printer, Receipt, Building2, CheckCircle2, DollarSign, CreditCard, Shield, Edit3 } from 'lucide-react';
 import { BarcodeBadge, OfficialLabStamp } from './BarcodeBadge';
+import { RTLogo } from './RTLogo';
 
 interface InvoiceViewerProps {
   encounter: PatientEncounter;
@@ -142,13 +143,7 @@ export const InvoiceViewer: React.FC<InvoiceViewerProps> = ({
         <div className="border-b-2 border-rose-900 pb-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-rose-800 shadow-md bg-black shrink-0">
-                <img
-                  src={settings.logoUrl || '/assets/aistudio/photo_2026-10-02_00-22-10_28ae1371.jpg'}
-                  alt="RT Lab Logo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <RTLogo size={60} imageUrl={settings.logoUrl} />
               <div>
                 <h1 className="text-xl font-black text-rose-950">
                   {settings.labNameAr}

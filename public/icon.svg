@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B1E3F" />
+      <stop offset="50%" stop-color="#671128" />
+      <stop offset="100%" stop-color="#400A18" />
+    </linearGradient>
+    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37" />
+      <stop offset="50%" stop-color="#FFF8DC" />
+      <stop offset="100%" stop-color="#AA771C" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Background Shield -->
+  <path d="M 256,24 C 380,24 456,70 456,150 C 456,310 370,430 256,488 C 142,430 56,310 56,150 C 56,70 132,24 256,24 Z"
+        fill="url(#bgGrad)" stroke="url(#goldBorder)" stroke-width="12" filter="url(#shadow)" />
+
+  <!-- Inner Gold Inset -->
+  <path d="M 256,44 C 362,44 434,84 434,156 C 434,296 358,406 256,460 C 154,406 78,296 78,156 C 78,84 150,44 256,44 Z"
+        fill="none" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="3" />
+
+  <!-- Medical Cross Accent Behind Text -->
+  <g opacity="0.18" fill="#FFFFFF">
+    <rect x="236" y="90" width="40" height="240" rx="8" />
+    <rect x="136" y="190" width="240" height="40" rx="8" />
+  </g>
+
+  <!-- Stylized RT Monogram -->
+  <g fill="#FFFFFF" filter="url(#shadow)">
+    <!-- R -->
+    <path d="M 145,150 L 210,150 C 245,150 268,168 268,202 C 268,228 252,244 230,252 L 272,320 L 236,320 L 198,260 L 175,260 L 175,320 L 145,320 Z M 175,176 L 175,236 L 208,236 C 226,236 238,224 238,206 C 238,188 226,176 208,176 Z" />
+    <!-- T -->
+    <path d="M 276,150 L 366,150 L 366,178 L 336,178 L 336,320 L 306,320 L 306,178 L 276,178 Z" />
+  </g>
+
+  <!-- Ribbon/Banner Text: DIAGNOSTIC LABS -->
+  <rect x="110" y="342" width="292" height="36" rx="18" fill="#FFFFFF" />
+  <text x="256" y="366" font-family="system-ui, sans-serif" font-size="18" font-weight="900" fill="#7A1C30" text-anchor="middle" letter-spacing="3">
+    DIAGNOSTIC LABS
+  </text>
+
+  <!-- Kasr Al Ainy subtitle -->
+  <text x="256" y="408" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#FFF8DC" text-anchor="middle" letter-spacing="1.5">
+    KASR AL AINY CONSULTANTS
+  </text>
+
+  <!-- Stars -->
+  <circle cx="216" cy="428" r="3" fill="#D4AF37" />
+  <circle cx="256" cy="428" r="4" fill="#FFF8DC" />
+  <circle cx="296" cy="428" r="3" fill="#D4AF37" />
+</svg>

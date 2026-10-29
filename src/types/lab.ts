@@ -25,6 +25,7 @@ export interface TestCatalogItem {
   panicLow?: number;
   panicHigh?: number;
   options?: string[]; // For qualitative/semi-quantitative like Negative/Positive, Clear/Turbid
+  deviceId?: string; // Associated analyzer / station
 }
 
 export interface ProfileCatalogItem {
@@ -37,14 +38,15 @@ export interface ProfileCatalogItem {
   discountPrice?: number;
   category: string;
   description: string;
+  specimenType?: string; // e.g. "EDTA Whole Blood", "Serum", "Fresh Clean-Catch Urine"
 }
 
 export interface PackageCatalogItem {
   id: string;
   name: string;
   nameAr: string;
-  tests: string[]; // List of test codes included
-  profiles: string[]; // List of profile codes included
+  tests: string[];
+  profiles: string[];
   price: number;
   description: string;
   popular?: boolean;
@@ -55,7 +57,7 @@ export interface PatientRecord {
   id: string;
   mrn: string; // RT-YYYY-XXXX
   barcode: string;
-  name: string; // Patient name (Arabic or English)
+  name: string;
   nationalId?: string;
   ageYears: number;
   ageMonths?: number;
@@ -86,11 +88,46 @@ export interface PatientTestResult {
   comment?: string;
 }
 
+export interface LabSignature {
+  id: string;
+  name: string;
+  title: string;
+  role: 'Pathologist' | 'Chemist' | 'QualityManager' | 'Consultant';
+  signatureType: 'font' | 'image';
+  signatureText?: string;
+  signatureImageUrl?: string;
+  signatureHeight: number; // e.g. 36 to 64px (well-proportioned)
+  show: boolean;
+}
+
+export interface DiagnosticGuidanceItem {
+  id: string;
+  profileCode: string; // 'CBC', 'LFT', 'KFT', 'LIPID', 'TFT', 'DIABETES', 'URINALYSIS', 'COAG', etc.
+  title: string;
+  statement: string;
+  suggestedTestCodes?: string[]; // Test abbreviations only (e.g. ['FERR', 'TIBC', 'CRP'])
+}
+
+export interface LabDevice {
+  id: string;
+  code: string;
+  name: string;
+  model: string;
+  category: string;
+  manufacturer: string;
+  status: 'Operational' | 'Standby' | 'Maintenance';
+  testCodes: string[];
+  minimized?: boolean; // Support minimizing/collapsing the analyzer in the UI!
+}
+
 export interface PatientEncounter {
   id: string;
   patient: PatientRecord;
   selectedTestCodes: string[];
   results: Record<string, PatientTestResult>;
+  profileComments?: Record<string, string>; // Comment and interpretation per profile
+  profileRecommendedTests?: Record<string, string[]>; // Suggested follow-up test codes (abbreviations only)
+  showSmartReportOnPrint?: boolean; // User toggle to Show or Hide the final smart report page!
   clinicalInterpretation?: {
     summary: string;
     primaryFindings: string[];
@@ -134,15 +171,18 @@ export interface LabSettings {
   email: string;
   website: string;
   logoUrl: string;
-  chemistName: string;
-  chemistTitle: string;
-  pathologistName: string;
-  pathologistTitle: string;
+  signatures: LabSignature[]; // Customizable list of signatures
+  chemistName?: string;
+  chemistTitle?: string;
+  pathologistName?: string;
+  pathologistTitle?: string;
   currency: string;
   stampText: string;
   showStamp: boolean;
   showWatermark: boolean;
   showBarcode: boolean;
   showMethodology: boolean;
+  showSmartReportPage: boolean; // Global default toggle for final smart report page
+  showRecommendedTests: boolean; // Global toggle for suggested follow-up tests
   accreditationText: string;
 }

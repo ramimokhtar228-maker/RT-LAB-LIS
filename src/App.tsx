@@ -7,6 +7,7 @@ import {
   PackageCatalogItem,
   LabSettings,
   PatientTestResult,
+  LabDevice,
 } from './types/lab';
 import {
   DEFAULT_LAB_SETTINGS,
@@ -14,6 +15,7 @@ import {
   DEFAULT_PROFILES,
   DEFAULT_PACKAGES,
 } from './data/defaultCatalog';
+import { DEFAULT_LAB_DEVICES } from './data/analyzers';
 import { calculateLabResults, evaluateFlag, getReferenceRangeText } from './utils/calculations';
 import { Header } from './components/Header';
 import { ResultsEntryGrid } from './components/ResultsEntryGrid';
@@ -26,6 +28,7 @@ import { PatientFormModal } from './components/PatientFormModal';
 import { TestSelectionDrawer } from './components/TestSelectionDrawer';
 import { SettingsModal } from './components/SettingsModal';
 import { GitHubDeployModal } from './components/GitHubDeployModal';
+import { PWAInstallButton } from './components/PWAInstallButton';
 import {
   User,
   Plus,
@@ -42,11 +45,12 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const STORAGE_KEY_SETTINGS = 'rt_lab_settings_v3';
-const STORAGE_KEY_TESTS = 'rt_lab_tests_v3';
-const STORAGE_KEY_PROFILES = 'rt_lab_profiles_v3';
-const STORAGE_KEY_PACKAGES = 'rt_lab_packages_v3';
-const STORAGE_KEY_ENCOUNTERS = 'rt_lab_encounters_v3';
+const STORAGE_KEY_SETTINGS = 'rt_lab_settings_v4';
+const STORAGE_KEY_TESTS = 'rt_lab_tests_v4';
+const STORAGE_KEY_PROFILES = 'rt_lab_profiles_v4';
+const STORAGE_KEY_PACKAGES = 'rt_lab_packages_v4';
+const STORAGE_KEY_ENCOUNTERS = 'rt_lab_encounters_v4';
+const STORAGE_KEY_DEVICES = 'rt_lab_devices_v4';
 
 export default function App() {
   // 1. Settings state
@@ -87,6 +91,20 @@ export default function App() {
     }
   });
 
+  // Devices catalog state with persistence
+  const [devicesCatalog, setDevicesCatalog] = useState<LabDevice[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_DEVICES);
+      return saved ? JSON.parse(saved) : DEFAULT_LAB_DEVICES;
+    } catch {
+      return DEFAULT_LAB_DEVICES;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(devicesCatalog));
+  }, [devicesCatalog]);
+
   // Catalog Map for O(1) lookups
   const catalogMap = useMemo(() => {
     const map = new Map<string, TestCatalogItem>();
@@ -103,125 +121,102 @@ export default function App() {
       console.warn(e);
     }
 
-    // Default sample encounter
-    const samplePatient: PatientRecord = {
-      id: 'pat-default-01',
-      mrn: 'RT-2026-1048',
-      barcode: 'RT-2026-1048',
-      name: 'أحمد محمود سالم (Ahmed Mahmoud)',
-      nationalId: '28911040101894',
-      ageYears: 42,
+    // Case 1: Yara Mohamed Ramadan from user's attached report
+    const yaraPatient: PatientRecord = {
+      id: 'pat-yara-01',
+      mrn: 'RT-2026-062',
+      barcode: 'RT-2026-062',
+      name: 'يارا محمد رمضان (Yara Mohamed Ramadan)',
+      nationalId: '31610230104822',
+      ageYears: 10,
       ageMonths: 0,
-      gender: 'Male',
-      phone: '0100 882 1940',
-      email: 'ahmed.salem@example.com',
-      referringDoctor: 'Dr. Tarek El-Kady (Consultant Internal Medicine)',
-      sampleDate: new Date().toISOString().split('T')[0],
-      sampleTime: '08:30',
-      reportDate: new Date().toISOString().split('T')[0],
-      reportTime: '14:00',
-      sampleType: 'Venous Blood (EDTA & Serum SST)',
-      fastingStatus: 'Fasting 12 Hours',
-      clinicalNotes: 'Routine executive metabolic screen, mild fatigue, follow-up lipids.',
+      gender: 'Female',
+      phone: '01013242777',
+      referringDoctor: 'Prof. Dr. Herself',
+      sampleDate: '2026-10-23',
+      sampleTime: '17:32',
+      reportDate: '2026-10-23',
+      reportTime: '17:32',
+      sampleType: 'EDTA Whole Blood',
+      fastingStatus: 'Random',
+      clinicalNotes: 'Weakness, Abd. Pain, loss of apatite',
       createdAt: new Date().toISOString(),
     };
 
-    const initialCodes = [
-      'WBC', 'RBC', 'HGB', 'HCT', 'MCV', 'MCH', 'MCHC', 'PLT',
-      'ALT', 'AST', 'ALP', 'TBIL', 'DBIL', 'IBIL', 'TP', 'ALB', 'GLOB', 'AG_RATIO',
-      'CREAT', 'UREA', 'BUN', 'EGFR', 'URIC',
-      'CHOL', 'TG', 'HDL', 'LDL', 'VLDL', 'NON_HDL', 'CHOL_HDL_RATIO',
-      'FBG', 'HBA1C', 'EAG', 'TSH'
+    const yaraCodes = [
+      'HGB', 'RBC', 'HCT', 'MCV', 'MCH', 'MCHC', 'RDW', 'PLT',
+      'WBC', 'NEUT_PCT', 'LYMPH_PCT', 'MONO_PCT', 'EOS_PCT', 'BASO_PCT', 'ANC'
     ];
 
-    const initialResults: Record<string, PatientTestResult> = {
-      WBC: { code: 'WBC', name: 'Total Leukocyte Count (WBC)', value: '7.8', flag: 'NORMAL', unit: '10^3/µL', refRangeText: '4.0 - 11.0', method: 'Laser Flow Cytometry' },
-      RBC: { code: 'RBC', name: 'Red Blood Cell Count (RBC)', value: '4.95', flag: 'NORMAL', unit: '10^6/µL', refRangeText: '4.5 - 5.9', method: 'Impedance' },
-      HGB: { code: 'HGB', name: 'Hemoglobin (Hb)', value: '14.8', flag: 'NORMAL', unit: 'g/dL', refRangeText: '13.5 - 17.5', method: 'SLS Spectrophotometry' },
-      HCT: { code: 'HCT', name: 'Hematocrit (PCV)', value: '44.5', flag: 'NORMAL', unit: '%', refRangeText: '40.0 - 50.0', method: 'Calculated' },
-      MCV: { code: 'MCV', name: 'Mean Corpuscular Volume (MCV)', value: '89.9', flag: 'NORMAL', unit: 'fL', refRangeText: '80.0 - 96.0', method: 'Pulse Height', isCalculated: true },
-      MCH: { code: 'MCH', name: 'Mean Corpuscular Hemoglobin (MCH)', value: '29.9', flag: 'NORMAL', unit: 'pg', refRangeText: '27.0 - 33.0', method: 'Calculated', isCalculated: true },
-      MCHC: { code: 'MCHC', name: 'Mean Corpuscular Hb Concentration (MCHC)', value: '33.3', flag: 'NORMAL', unit: 'g/dL', refRangeText: '32.0 - 36.0', method: 'Calculated', isCalculated: true },
-      PLT: { code: 'PLT', name: 'Platelet Count (PLT)', value: '265', flag: 'NORMAL', unit: '10^3/µL', refRangeText: '150 - 450', method: 'Focused Impedance' },
-      ALT: { code: 'ALT', name: 'Alanine Aminotransferase (ALT/SGPT)', value: '54', flag: 'HIGH', unit: 'U/L', refRangeText: 'Up to 45', method: 'IFCC UV Rate' },
-      AST: { code: 'AST', name: 'Aspartate Aminotransferase (AST/SGOT)', value: '38', flag: 'NORMAL', unit: 'U/L', refRangeText: 'Up to 40', method: 'IFCC UV Rate' },
-      ALP: { code: 'ALP', name: 'Alkaline Phosphatase (ALP)', value: '85', flag: 'NORMAL', unit: 'U/L', refRangeText: '40 - 130', method: 'Kinetic p-NPP' },
-      TBIL: { code: 'TBIL', name: 'Total Bilirubin', value: '0.85', flag: 'NORMAL', unit: 'mg/dL', refRangeText: '0.2 - 1.2', method: 'DPD Diazo' },
-      DBIL: { code: 'DBIL', name: 'Direct (Conjugated) Bilirubin', value: '0.20', flag: 'NORMAL', unit: 'mg/dL', refRangeText: 'Up to 0.3', method: 'Direct Diazo' },
-      IBIL: { code: 'IBIL', name: 'Indirect (Unconjugated) Bilirubin', value: '0.65', flag: 'NORMAL', unit: 'mg/dL', refRangeText: '0.2 - 0.9', method: 'Calculated', isCalculated: true },
-      TP: { code: 'TP', name: 'Total Protein', value: '7.3', flag: 'NORMAL', unit: 'g/dL', refRangeText: '6.4 - 8.3', method: 'Biuret' },
-      ALB: { code: 'ALB', name: 'Albumin', value: '4.4', flag: 'NORMAL', unit: 'g/dL', refRangeText: '3.5 - 5.2', method: 'BCG Dye' },
-      GLOB: { code: 'GLOB', name: 'Globulin', value: '2.9', flag: 'NORMAL', unit: 'g/dL', refRangeText: '2.3 - 3.5', method: 'Calculated', isCalculated: true },
-      AG_RATIO: { code: 'AG_RATIO', name: 'A/G Ratio', value: '1.52', flag: 'NORMAL', unit: 'Ratio', refRangeText: '1.2 - 2.2', method: 'Calculated', isCalculated: true },
-      CREAT: { code: 'CREAT', name: 'Serum Creatinine', value: '0.95', flag: 'NORMAL', unit: 'mg/dL', refRangeText: '0.7 - 1.3', method: 'Jaffe Rate-Blanked' },
-      UREA: { code: 'UREA', name: 'Blood Urea', value: '32', flag: 'NORMAL', unit: 'mg/dL', refRangeText: '15 - 45', method: 'Urease UV' },
-      BUN: { code: 'BUN', name: 'Blood Urea Nitrogen (BUN)', value: '15.0', flag: 'NORMAL', unit: 'mg/dL', refRangeText: '7 - 21', method: 'Calculated', isCalculated: true },
-      EGFR: { code: 'EGFR', name: 'Estimated GFR (eGFR)', value: '98', flag: 'NORMAL', unit: 'mL/min/1.73m²', refRangeText: '> 90 normal', method: 'CKD-EPI 2021', isCalculated: true },
-      URIC: { code: 'URIC', name: 'Uric Acid', value: '5.8', flag: 'NORMAL', unit: 'mg/dL', refRangeText: '3.5 - 7.2', method: 'Uricase Colorimetric' },
-      CHOL: { code: 'CHOL', name: 'Total Cholesterol', value: '228', flag: 'HIGH', unit: 'mg/dL', refRangeText: 'Desirable: < 200', method: 'CHOD-PAP' },
-      TG: { code: 'TG', name: 'Triglycerides', value: '185', flag: 'HIGH', unit: 'mg/dL', refRangeText: 'Normal: < 150', method: 'GPO-PAP' },
-      HDL: { code: 'HDL', name: 'HDL Cholesterol (Good)', value: '44', flag: 'NORMAL', unit: 'mg/dL', refRangeText: '> 40 (Optimal: > 50)', method: 'Direct Homogeneous' },
-      LDL: { code: 'LDL', name: 'LDL Cholesterol (Bad)', value: '147.0', flag: 'HIGH', unit: 'mg/dL', refRangeText: 'Optimal: < 100 (Borderline: 100-129)', method: 'Friedewald Formula', isCalculated: true },
-      VLDL: { code: 'VLDL', name: 'VLDL Cholesterol', value: '37.0', flag: 'HIGH', unit: 'mg/dL', refRangeText: '5 - 30', method: 'Calculated: TG/5', isCalculated: true },
-      NON_HDL: { code: 'NON_HDL', name: 'Non-HDL Cholesterol', value: '184.0', flag: 'HIGH', unit: 'mg/dL', refRangeText: '< 130', method: 'Calculated: Chol - HDL', isCalculated: true },
-      CHOL_HDL_RATIO: { code: 'CHOL_HDL_RATIO', name: 'Total Cholesterol / HDL Ratio', value: '5.18', flag: 'HIGH', unit: 'Ratio', refRangeText: 'Desirable: < 4.5', method: 'Calculated', isCalculated: true },
-      FBG: { code: 'FBG', name: 'Fasting Blood Glucose (FBG)', value: '108', flag: 'HIGH', unit: 'mg/dL', refRangeText: 'Normal: 70 - 100 (Prediabetes: 100-125)', method: 'Hexokinase' },
-      HBA1C: { code: 'HBA1C', name: 'Glycated Hemoglobin (HbA1c)', value: '5.9', flag: 'HIGH', unit: '%', refRangeText: 'Normal: < 5.7% (Prediabetes: 5.7-6.4%, Diabetic: >= 6.5%)', method: 'HPLC Ion-Exchange' },
-      EAG: { code: 'EAG', name: 'Estimated Average Glucose (eAG)', value: '123', flag: 'HIGH', unit: 'mg/dL', refRangeText: '70 - 115', method: 'Derived from HbA1c', isCalculated: true },
-      TSH: { code: 'TSH', name: 'TSH (Thyroid Stimulating Hormone)', value: '2.15', flag: 'NORMAL', unit: 'µIU/mL', refRangeText: '0.40 - 4.20', method: 'ECLIA 3rd Gen' },
+    const yaraResults: Record<string, PatientTestResult> = {
+      HGB: { code: 'HGB', name: 'Hemoglobin (Hb)', value: '12.60', flag: 'NORMAL', unit: 'g/dL', refRangeText: '12.5 - 15.5 g/dL', method: 'Automated SLS-Hb' },
+      RBC: { code: 'RBC', name: 'R.B.Cs Count', value: '4.200', flag: 'NORMAL', unit: 'x10^6/µL', refRangeText: '4 - 5.8 x10^6/µL', method: 'Electrical Impedance' },
+      HCT: { code: 'HCT', name: 'Hematocrit (PCV)', value: '37.00', flag: 'NORMAL', unit: '%', refRangeText: '36 - 48 %', method: 'Calculated' },
+      MCV: { code: 'MCV', name: 'M.C.V', value: '88.1', flag: 'NORMAL', unit: 'fL', refRangeText: '80 - 98 fL', method: 'Direct measurement' },
+      MCH: { code: 'MCH', name: 'M.C.H', value: '30', flag: 'NORMAL', unit: 'pg', refRangeText: '27 - 33 pg', method: 'Calculated' },
+      MCHC: { code: 'MCHC', name: 'M.C.H.C', value: '34.1', flag: 'NORMAL', unit: 'g/dL', refRangeText: '32 - 36 g/dL', method: 'Calculated' },
+      RDW: { code: 'RDW', name: 'R.D.W-CV', value: '13.55', flag: 'NORMAL', unit: '%', refRangeText: '11.5 - 14.5 %', method: 'RBC curve' },
+      PLT: { code: 'PLT', name: 'Platelets Count', value: '310', flag: 'NORMAL', unit: 'x10^3/µL', refRangeText: '150 - 450 x10^3/µL', method: 'Focused Impedance' },
+      WBC: { code: 'WBC', name: 'Total Leucocytic Count (TLC)', value: '7.00', flag: 'NORMAL', unit: 'x10^3/µL', refRangeText: '4 - 11 x10^3/µL', method: 'Laser Flow Cytometry' },
+      NEUT_PCT: { code: 'NEUT_PCT', name: 'Segmented Neutrophils %', value: '60', flag: 'NORMAL', unit: '%', refRangeText: '40 - 65 %', method: 'Flow Cytometry' },
+      LYMPH_PCT: { code: 'LYMPH_PCT', name: 'Lymphocytes %', value: '30', flag: 'NORMAL', unit: '%', refRangeText: '20 - 45 %', method: 'Flow Cytometry' },
+      MONO_PCT: { code: 'MONO_PCT', name: 'Monocytes %', value: '03', flag: 'NORMAL', unit: '%', refRangeText: '2 - 8 %', method: 'Flow Cytometry' },
+      EOS_PCT: { code: 'EOS_PCT', name: 'Eosinophils %', value: '03', flag: 'NORMAL', unit: '%', refRangeText: '1 - 6 %', method: 'Flow Cytometry' },
+      BASO_PCT: { code: 'BASO_PCT', name: 'Basophils %', value: '00', flag: 'NORMAL', unit: '%', refRangeText: '0 - 1 %', method: 'Flow Cytometry' },
+      ANC: { code: 'ANC', name: 'Absolute Neutrophils (ANC)', value: '4.2', flag: 'NORMAL', unit: 'x10^3/µL', refRangeText: '1.5 - 7.5 x10^3/µL', method: 'Calculated' },
     };
 
-    const initialInvoice = {
-      invoiceNumber: 'INV-2026-0812',
-      date: new Date().toISOString().split('T')[0],
-      items: [
-        { name: 'Complete Blood Count (CBC)', code: 'CBC', type: 'Profile' as const, price: 150 },
-        { name: 'Liver Function Tests (LFT)', code: 'LFT', type: 'Profile' as const, price: 290 },
-        { name: 'Kidney Function Tests (KFT)', code: 'KFT', type: 'Profile' as const, price: 310 },
-        { name: 'Lipid Profile Comprehensive', code: 'LIPID', type: 'Profile' as const, price: 220 },
-        { name: 'Fasting Blood Glucose & HbA1c', code: 'DIABETES', type: 'Profile' as const, price: 195 },
-        { name: 'TSH Ultra-sensitive', code: 'TSH', type: 'Test' as const, price: 130 },
-      ],
-      subtotal: 1295,
-      discountPercent: 15,
-      discountAmount: 194.25,
+    const yaraInvoice = {
+      invoiceNumber: 'INV-2026-0062',
+      date: '2026-10-23',
+      items: [{ name: 'Complete Blood Count (CBC with Automated Diff)', code: 'CBC', type: 'Profile' as const, price: 150 }],
+      subtotal: 150,
+      discountPercent: 0,
+      discountAmount: 0,
       tax: 0,
-      total: 1100.75,
-      paidAmount: 1100.75,
-      paymentMethod: 'Credit Card' as const,
+      total: 150,
+      paidAmount: 150,
+      paymentMethod: 'Cash' as const,
       paymentStatus: 'Paid' as const,
     };
 
-    const initialInterpretation = {
-      summary: 'أظهر الفحص المخبري وجود ارتفاع ملحوظ في دهون الدم (خلل شحمي: ارتفاع الكوليسترول الكلي، والدهون الثلاثية، وLDL)، مع ارتفاع معتدل في سكر الدم الصائم والسكر التراكمي في نطاق مقدمات السكري (Prediabetes)، بالإضافة لارتفاع طفيف في إنزيم الكبد ALT مما يتسق مع احتمال الكبد الدهني الأيضي (Metabolic Steatosis). بقية وظائف الكلى والغدة الدرقية وصورة الدم ضمن الحدود الطبيعية.',
+    const yaraInterpretation = {
+      summary: 'صورة دم كاملة سليمة ضمن الحدود الطبيعية المتوافقة مع الفئة العمرية (10 سنوات). لا توجد دلالات لفقر دم أو عدوى حادة. نظراً لوجود ألم بالبطن وفقدان الشهية (Weakness, Abd. Pain, loss of appetite)، يُوصى بإجراء تحليل براز كامل ومخزون الحديد Serum Ferritin وفحص بول روتيني.',
       primaryFindings: [
-        'ALT: 54 U/L (High) - إنزيم الكبد مرتفع',
-        'Lipid Profile: Cholesterol 228 mg/dL, Triglycerides 185 mg/dL, LDL 147 mg/dL (Atherogenic dyslipidemia)',
-        'Fasting Glucose: 108 mg/dL, HbA1c: 5.9% (Impaired fasting glucose / Prediabetes)',
+        'Hemoglobin (Hb): 12.60 g/dL (Normal)',
+        'Red Blood Cells & Indices (MCV 88.1 fL, MCH 30 pg, MCHC 34.1 g/dL) - Normocytic Normochromic',
+        'Total & Differential Leukocyte count within normal limits (TLC 7.0 x10^3/µL)',
+        'Platelet count adequate (310 x10^3/µL)',
       ],
       differentialConsiderations: [
-        'متلازمة الأيض ومقاومة الإنسولين المبكرة (Metabolic Syndrome & Insulin Resistance)',
-        'دهون الكبد غير الكحولية (Non-Alcoholic Fatty Liver Disease / NAFLD)',
-        'عوامل اختطار قلبية وعائية تستوجب ضبط نمط الحياة والحمية الغذائية',
+        'أسباب معوية طفيلية أو وظيفية مسببة لآلام البطن وفقدان الشهية (Parasitic vs. Functional Dyspepsia)',
+        'استبعاد نقص مخزون الحديد الكامن في بدايته (Latent Iron Store Depletion)',
       ],
       suggestedFollowUp: [
-        'متابعة حمية غذائية منخفضة النشويات والدهون المشبعة مع ممارسة الرياضة',
-        'إجراء فحص مقاومة الإنسولين HOMA-IR وسونار على البطن (Abdominal Ultrasound) لتقييم الكبد',
-        'إعادة فحص الدهون والسكر التراكمي بعد 3 أشهر',
+        'إجراء فحص براز كامل للكشف عن الطفيليات والدم الخفي (Stool Routine & Occult Blood)',
+        'فحص مخزون الحديد الفيريتين (Serum Ferritin)',
+        'سونار على البطن والحوض في حال استمرار الألم (Abdominal Ultrasonography)',
       ],
       criticalAlert: null,
-      generatedAt: new Date().toISOString(),
+      generatedAt: '2026-10-23T17:32:00Z',
       isAiGenerated: true,
     };
 
     return [
       {
-        id: 'enc-01',
-        patient: samplePatient,
-        selectedTestCodes: initialCodes,
-        results: initialResults,
-        invoice: initialInvoice,
-        clinicalInterpretation: initialInterpretation,
+        id: 'enc-yara-01',
+        patient: yaraPatient,
+        selectedTestCodes: yaraCodes,
+        results: yaraResults,
+        invoice: yaraInvoice,
+        clinicalInterpretation: yaraInterpretation,
+        profileComments: {
+          CBC: 'Normocytic normochromic red cell indices within normal limits.\nWhite blood cell count and automated 5-part differential show no numerical or morphological abnormalities.\nAdequate platelet count.',
+        },
+        profileRecommendedTests: {
+          CBC: ['FERRITIN', 'IRON', 'TIBC', 'STOOL_OB'],
+        },
+        showSmartReportOnPrint: true,
         status: 'Results Entered',
       },
     ];
@@ -579,6 +574,9 @@ export default function App() {
         {/* Tab A: Encounters & Results Entry */}
         {activeTab === 'encounters' && (
           <div className="space-y-6">
+            {/* PWA Mobile & Laptop Install Banner */}
+            <PWAInstallButton variant="banner" />
+
             {/* Patient Header Card */}
             {currentEncounter && (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -649,7 +647,7 @@ export default function App() {
                     <span
                       onClick={(e) => handleDeleteEncounter(enc.id, e)}
                       className="p-0.5 rounded hover:bg-rose-800 text-rose-300"
-                      title="حذف هذا المريض"
+                      title="حذف هذا المريض نهائياً"
                     >
                       ×
                     </span>
@@ -681,6 +679,8 @@ export default function App() {
             encounter={currentEncounter}
             settings={settings}
             catalogMap={catalogMap}
+            profilesCatalog={profilesCatalog}
+            onUpdateEncounter={(updatedEnc) => updateCurrentEncounter(() => updatedEnc)}
             onEditPatient={() => {
               setEditingPatientTarget(currentEncounter.patient);
               setPatientModalOpen(true);
@@ -735,16 +735,20 @@ export default function App() {
             testsCatalog={testsCatalog}
             profilesCatalog={profilesCatalog}
             packagesCatalog={packagesCatalog}
+            devicesCatalog={devicesCatalog}
             onUpdateTestsCatalog={setTestsCatalog}
             onUpdateProfilesCatalog={setProfilesCatalog}
             onUpdatePackagesCatalog={setPackagesCatalog}
+            onUpdateDevicesCatalog={setDevicesCatalog}
             onResetToDefaults={() => {
               setTestsCatalog(DEFAULT_TESTS);
               setProfilesCatalog(DEFAULT_PROFILES);
               setPackagesCatalog(DEFAULT_PACKAGES);
+              setDevicesCatalog(DEFAULT_LAB_DEVICES);
               localStorage.removeItem(STORAGE_KEY_TESTS);
               localStorage.removeItem(STORAGE_KEY_PROFILES);
               localStorage.removeItem(STORAGE_KEY_PACKAGES);
+              localStorage.removeItem(STORAGE_KEY_DEVICES);
             }}
           />
         )}
