@@ -22,12 +22,15 @@ export const DEFAULT_LAB_SETTINGS: LabSettings = {
   showStamp: true,
   showWatermark: true,
   showBarcode: true,
-  showMethodology: true,
   accreditationText: 'ISO 15189 Accredited Clinical Laboratory • Automated Cleveland-Referenced Workflows',
 };
 
-export const DEFAULT_TESTS: TestCatalogItem[] = [
-  // ================= CBC (Complete Blood Count) =================
+import { COMPREHENSIVE_CATALOG_400 } from './comprehensiveTests';
+
+export const DEFAULT_TESTS: TestCatalogItem[] = COMPREHENSIVE_CATALOG_400;
+
+/* Legacy shortened tests replaced with 410+ comprehensive international catalog */
+const _OLD_TESTS = [
   {
     code: 'WBC',
     name: 'Total Leukocyte Count (WBC)',

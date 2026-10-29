@@ -4,6 +4,9 @@ import { BarcodeBadge, OfficialLabStamp } from './BarcodeBadge';
 import { getFlagDisplayInfo } from '../utils/calculations';
 import { Printer, Download, Sparkles, Building2, Phone, Mail, Globe, MapPin, CheckCircle2, ShieldCheck, Edit3 } from 'lucide-react';
 
+import { exportReportToPdf, exportReportToPptx } from '../utils/exportUtils';
+import { Presentation, FileDown, Loader2 } from 'lucide-react';
+
 interface ReportViewerProps {
   encounter: PatientEncounter;
   settings: LabSettings;
@@ -20,9 +23,35 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
   onEditSettings,
 }) => {
   const { patient, selectedTestCodes, results, clinicalInterpretation } = encounter;
+  const [isExportingPdf, setIsExportingPdf] = React.useState(false);
+  const [isExportingPptx, setIsExportingPptx] = React.useState(false);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPdf = async () => {
+    try {
+      setIsExportingPdf(true);
+      await exportReportToPdf('report-printable-sheet', encounter);
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      alert('حدث خطأ أثناء تصدير PDF، يمكنك استخدام زر الطباعة للحفظ كـ PDF.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleDownloadPptx = async () => {
+    try {
+      setIsExportingPptx(true);
+      await exportReportToPptx(encounter, settings, catalogMap);
+    } catch (err) {
+      console.error('PowerPoint generation error:', err);
+      alert('حدث خطأ أثناء تصدير عرض البوربوينت.');
+    } finally {
+      setIsExportingPptx(false);
+    }
   };
 
   // Group tests by category for clinical elegance
@@ -42,46 +71,84 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
   return (
     <div className="max-w-5xl mx-auto my-6 px-2 sm:px-4">
       {/* Top Controls (Hidden during print) */}
-      <div className="bg-slate-900 text-white p-4 rounded-2xl mb-6 shadow-md border border-slate-800 flex flex-wrap items-center justify-between gap-3 print:hidden">
+      <div className="bg-slate-900 text-white p-4 rounded-2xl mb-6 shadow-md border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-rose-900/60 border border-rose-700/60 flex items-center justify-center text-rose-300">
             <Printer className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold">معاينة وطباعة تقرير التحاليل المعتمد (A4 Medical Report)</h2>
+            <h2 className="text-sm font-bold">معاينة وتصدير تقرير التحاليل المعتمد (Medical Report)</h2>
             <p className="text-xs text-slate-400">
-              التقرير مصمم وفق المعايير الطبية الدولية وجاهز للطباعة أو الحفظ كملف PDF
+              تصدير مباشر بصيغة PDF أو عرض تقديمي PowerPoint أو طباعة A4
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-end w-full md:w-auto">
+          {/* Direct PDF Download Button */}
           <button
-            onClick={onEditPatient}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-colors"
+            onClick={handleDownloadPdf}
+            disabled={isExportingPdf}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-950 hover:bg-rose-900 text-rose-200 text-xs font-bold border border-rose-700/80 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            title="تحميل مباشر لملف PDF عالي الجودة"
           >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>تعديل بيانات المريض</span>
+            {isExportingPdf ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
+                <span>جاري إعداد PDF...</span>
+              </>
+            ) : (
+              <>
+                <FileDown className="w-4 h-4 text-rose-400" />
+                <span>حفظ PDF</span>
+              </>
+            )}
           </button>
+
+          {/* Direct PowerPoint Download Button */}
           <button
-            onClick={onEditSettings}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-colors"
+            onClick={handleDownloadPptx}
+            disabled={isExportingPptx}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-600 hover:to-amber-800 text-amber-100 text-xs font-bold border border-amber-600 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            title="تصدير عرض تقديمي بوربوينت PPTX شامل للحالات والندوات الطبية"
           >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>تعديل الترويسة والامضاءات</span>
+            {isExportingPptx ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+                <span>جاري إعداد PPTX...</span>
+              </>
+            ) : (
+              <>
+                <Presentation className="w-4 h-4 text-amber-300" />
+                <span>حفظ PowerPoint</span>
+              </>
+            )}
           </button>
+
+          {/* Native Print button */}
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-rose-700 to-rose-900 text-white text-xs font-bold hover:from-rose-600 hover:to-rose-800 shadow-lg shadow-rose-950/40 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-700 to-rose-900 text-white text-xs font-bold hover:from-rose-600 hover:to-rose-800 shadow-lg shadow-rose-950/40 transition-all active:scale-95"
           >
             <Printer className="w-4 h-4" />
-            <span>طباعة التقرير (Print Report / PDF)</span>
+            <span>طباعة A4</span>
+          </button>
+
+          <button
+            onClick={onEditPatient}
+            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition-colors"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>بيانات المريض</span>
           </button>
         </div>
       </div>
 
       {/* ================= Printable A4 Sheet ================= */}
-      <div className="bg-white text-slate-900 p-8 sm:p-10 rounded-2xl shadow-xl border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0 print:rounded-none relative overflow-hidden font-sans">
+      <div
+        id="report-printable-sheet"
+        className="bg-white text-slate-900 p-8 sm:p-10 rounded-2xl shadow-xl border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0 print:rounded-none relative overflow-hidden font-sans"
+      >
         
         {/* Background Watermark (Optional from settings) */}
         {settings.showWatermark && (
