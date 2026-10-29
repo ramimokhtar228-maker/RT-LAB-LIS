@@ -2882,7 +2882,6 @@ export const COMPREHENSIVE_CATALOG_400: TestCatalogItem[] = [
     method: 'Ion Selective Electrode (ISE) / Colorimetric',
     panicHigh: 1.5,
   },
-,
   {
     code: "FACTOR_II",
     name: "Factor II (Prothrombin) Activity",
@@ -4378,7 +4377,6 @@ export const COMPREHENSIVE_CATALOG_400: TestCatalogItem[] = [
     sampleCondition: "First morning concentrated urine or 24h urine.",
     method: "Urine Protein Electrophoresis & Immunofixation (IFE)",
   },
-,
   {
     code: "JAK2_V617F",
     name: "JAK2 V617F Mutation (Polycythemia Vera / ET)",
@@ -4925,7 +4923,6 @@ export const COMPREHENSIVE_CATALOG_400: TestCatalogItem[] = [
     sampleCondition: "Fresh urine voided during acute neurovisceral attack, protect from light.",
     method: "Ehrlich Reagent Ion-Exchange Chromatography",
   },
-,
   {
     code: "MPO_CARDIAC",
     name: "Myeloperoxidase (MPO Vascular Inflammation)",

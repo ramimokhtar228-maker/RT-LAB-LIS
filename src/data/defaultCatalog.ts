@@ -22,6 +22,7 @@ export const DEFAULT_LAB_SETTINGS: LabSettings = {
   showStamp: true,
   showWatermark: true,
   showBarcode: true,
+  showMethodology: true,
   accreditationText: 'ISO 15189 Accredited Clinical Laboratory • Automated Cleveland-Referenced Workflows',
 };
 
