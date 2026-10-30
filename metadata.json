@@ -1,6 +1,6 @@
 {
-  "name": "RT Lab LIS - نظام إدارة معامل رامي مختار للتحاليل الطبية",
-  "description": "نظام مخبري تشخيصي متكامل لمعامل RT (معامل د. رامي مختار) لإدخال نتائج المرضى، الكتالوج الشامل، الحسابات التلقائية، التقارير والفواتير الطبية والذكاء الاصطناعي السريري.",
+  "name": "RT-LAB LIS - Medical Laboratory Information & Reporting System",
+  "description": "Comprehensive Clinical Laboratory Information System (LIS) with 412+ tests catalog, profile-based entry, CDS comments and interpretations, recommended follow-up tests, and multi-page professional medical PDF reporting.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

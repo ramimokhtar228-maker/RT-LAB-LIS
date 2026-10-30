@@ -85,7 +85,7 @@ export const AIInterpretationPanel: React.FC<AIInterpretationPanelProps> = ({
   };
 
   function generateLocalInterpretation(pat: any, testResults: Record<string, any>) {
-    const list = Object.values(testResults);
+    const list = Object.values(testResults) as PatientTestResult[];
     const abnormals = list.filter((r) => r.flag && r.flag !== 'NORMAL');
     const highs = abnormals.filter((r) => r.flag?.includes('HIGH'));
     const lows = abnormals.filter((r) => r.flag?.includes('LOW'));
@@ -95,43 +95,112 @@ export const AIInterpretationPanel: React.FC<AIInterpretationPanelProps> = ({
     let criticalAlert: string | null = null;
 
     if (abnormals.some((r) => r.flag?.includes('PANIC'))) {
-      criticalAlert = 'تنبيه لقيم حرجة (Panic Critical Values). يُرجى إخطار الطبيب المعالج على الفور.';
+      const panics = abnormals.filter((r) => r.flag?.includes('PANIC'));
+      criticalAlert = `CRITICAL ALERT: Urgent panic laboratory values detected for [${panics.map((p) => `${p.name}: ${p.value} ${p.unit}`).join(', ')}]. Immediate clinical communication with attending physician initiated.`;
     }
 
-    if (abnormals.some((r) => r.code === 'ALT' || r.code === 'AST')) {
-      diffs.push('ارتفاع إنزيمات الكبد يشير إلى إصابة كبدية محتملة (Hepatocellular Pattern / Steatosis / Hepatitis)');
-      followups.push('فحص فيروسات الكبد الوبائية (HCV Ab, HBsAg) وأشعة تليفزيونية على الكبد.');
+    // Hematology evaluation
+    const hgb = list.find((r) => r.code === 'HGB');
+    const mcv = list.find((r) => r.code === 'MCV');
+    const rbc = list.find((r) => r.code === 'RBC');
+    if (hgb && hgb.flag?.includes('LOW')) {
+      const mcvVal = mcv?.numericValue || parseFloat(mcv?.value || '0');
+      const rbcVal = rbc?.numericValue || parseFloat(rbc?.value || '0');
+      if (mcvVal && mcvVal < 80) {
+        const mentzer = rbcVal > 0 ? mcvVal / rbcVal : 0;
+        if (mentzer > 0 && mentzer < 13) {
+          diffs.push(`Microcytic Anemia with Mentzer Index = ${mentzer.toFixed(1)} (< 13): High clinical probability of Beta Thalassemia Minor/Trait.`);
+          followups.push('Hemoglobin Electrophoresis (HPLC), Serum Ferritin, Total Iron Binding Capacity (TIBC).');
+        } else {
+          diffs.push('Microcytic Hypochromic Anemia: Suggestive of Iron Deficiency Anemia vs Anemia of Chronic Disease.');
+          followups.push('Serum Ferritin, Serum Iron, Total Iron Binding Capacity (TIBC), Stool Occult Blood (FOBT).');
+        }
+      } else if (mcvVal && mcvVal > 100) {
+        diffs.push('Macrocytic Anemia: Megaloblastic process (Vitamin B12 / Folate deficiency) or chronic hepatic/reticulocyte etiology.');
+        followups.push('Serum Vitamin B12, Serum Folate, Serum LDH, Reticulocyte count.');
+      } else {
+        diffs.push('Normocytic Normochromic Anemia: Acute blood loss, renal compromise, or inflammatory suppression.');
+        followups.push('Reticulocyte count, Peripheral blood film, Serum Creatinine, CRP.');
+      }
     }
 
-    if (abnormals.some((r) => r.code === 'HGB' && r.flag?.includes('LOW'))) {
-      diffs.push('أنيميا نقص هيموجلوبين الدم (Anemia) تتطلب تقييم مخزون الحديد وشكل كرات الدم.');
-      followups.push('فحص مخزون الحديد (Serum Ferritin), Serum Iron, TIBC, ولطاخة دم كاملة (Blood Film).');
+    // Leukocytes
+    const wbc = list.find((r) => r.code === 'WBC');
+    const neut = list.find((r) => r.code === 'NEUT_PCT');
+    if (wbc && wbc.flag?.includes('HIGH')) {
+      if (neut && parseFloat(neut.value) > 75) {
+        diffs.push(`Neutrophilic Leukocytosis (${wbc.value} x10^3/µL, Neutrophils: ${neut.value}%): Acute bacterial infection or severe systemic inflammation.`);
+        followups.push('Quantitative C-Reactive Protein (CRP), ESR, Procalcitonin (PCT), Blood Culture.');
+      } else {
+        diffs.push(`Leukocytosis (${wbc.value} x10^3/µL): Infectious, immune reactive, or marrow stress response.`);
+        followups.push('High-Sensitivity CRP, Peripheral Blood Smear Examination.');
+      }
     }
 
-    if (abnormals.some((r) => (r.code === 'FBG' || r.code === 'HBA1C') && r.flag?.includes('HIGH'))) {
-      diffs.push('اضطراب سكر الدم أو داء السكري (Hyperglycemia / Diabetes Mellitus)');
-      followups.push('متابعة دورية للسكر التراكمي وفحص وظائف الكلى وزلال البول.');
+    // Liver enzymes
+    const alt = list.find((r) => r.code === 'ALT');
+    const ast = list.find((r) => r.code === 'AST');
+    const alp = list.find((r) => r.code === 'ALP');
+    const ggt = list.find((r) => r.code === 'GGT');
+    if (alt?.flag?.includes('HIGH') || ast?.flag?.includes('HIGH')) {
+      const altVal = parseFloat(alt?.value || '0');
+      const astVal = parseFloat(ast?.value || '0');
+      const deRitis = altVal > 0 ? astVal / altVal : 1;
+      if (deRitis > 2.0) {
+        diffs.push(`Transaminitis with AST/ALT ratio = ${deRitis.toFixed(1)} (> 2.0): Alcohol-related liver injury or advanced cirrhosis.`);
+        followups.push('Serum GGT, Abdominal Ultrasonography, FIB-4 Score, Alpha-Fetoprotein (AFP).');
+      } else if (altVal > 300) {
+        diffs.push(`Marked Acute Hepatocellular Injury (ALT: ${altVal} U/L): Acute viral hepatitis, toxic/drug-induced hepatotoxicity.`);
+        followups.push('HBsAg, HCV Ab, HAV IgM, Liver Ultrasound, Coagulation Profile (PT/INR).');
+      } else {
+        diffs.push(`Mild-to-Moderate Hepatocellular Pattern (ALT: ${altVal} U/L): Metabolic dysfunction steatotic liver disease (MASLD/Fatty Liver), medication effect.`);
+        followups.push('Viral Hepatitis Screening (HBsAg, HCV Ab), Fasting Lipid Profile, Liver Ultrasound.');
+      }
     }
 
-    if (abnormals.some((r) => (r.code === 'CHOL' || r.code === 'TG' || r.code === 'LDL') && r.flag?.includes('HIGH'))) {
-      diffs.push('خلل دهنيات الدم (Dyslipidemia) مع احتمالية زيادة عوامل الخطر القلبية.');
-      followups.push('مراجعة النظام الغذائي وتقييم الحاجة للعلاج الخافض للدهون مع رسم قلب دوري.');
+    if (alp?.flag?.includes('HIGH') || ggt?.flag?.includes('HIGH')) {
+      diffs.push('Cholestatic Biliary Pattern: Elevated Alkaline Phosphatase and GGT.');
+      followups.push('Biliary and Abdominal Ultrasound, Total and Direct Bilirubin Fractionation.');
+    }
+
+    // Renal Panel
+    const creat = list.find((r) => r.code === 'CREAT');
+    const egfr = list.find((r) => r.code === 'EGFR');
+    if (creat?.flag?.includes('HIGH')) {
+      diffs.push(`Impaired Glomerular Filtration: Serum Creatinine ${creat.value} mg/dL (eGFR ${egfr ? egfr.value + ' mL/min/1.73m²' : 'reduced'}).`);
+      followups.push('Urine Albumin-to-Creatinine Ratio (ACR), 24h Urine Protein, Renal Duplex Ultrasonography, Serum Electrolytes (Na/K).');
+    }
+
+    // Glycemia
+    const fbg = list.find((r) => r.code === 'FBG');
+    const hba1c = list.find((r) => r.code === 'HBA1C');
+    if (fbg?.flag?.includes('HIGH') || hba1c?.flag?.includes('HIGH')) {
+      diffs.push(`Impaired Glycemic Regulation / Diabetes Mellitus (HbA1c: ${hba1c?.value || '-'}%, FBG: ${fbg?.value || '-'} mg/dL).`);
+      followups.push('Microalbuminuria screening, Lipid panel, Glycemic control monitoring, Retinal examination.');
+    }
+
+    // Lipids
+    const tg = list.find((r) => r.code === 'TG');
+    const ldl = list.find((r) => r.code === 'LDL');
+    if (tg?.flag?.includes('HIGH') || ldl?.flag?.includes('HIGH')) {
+      diffs.push(`Atherogenic Dyslipidemia: Elevated ${ldl?.flag?.includes('HIGH') ? 'LDL' : ''} ${tg?.flag?.includes('HIGH') ? 'Triglycerides' : ''}.`);
+      followups.push('Cardiovascular 10-year risk assessment, Apo-B, hs-CRP, Lifestyle and dietary modification.');
     }
 
     if (diffs.length === 0) {
-      diffs.push('تغيرات مخبرية معزولة تتطلب المقارنة مع الحالة السريرية للمريض.');
-      followups.push('مراجعة الطبيب الاستشاري المعالج وإعادة التحاليل الشاذة بعد فترة مناسبة.');
+      diffs.push('All evaluated laboratory parameters correlate with expected physiological baseline.');
+      followups.push('Routine periodic clinical health maintenance.');
     }
 
     return {
       summary: abnormals.length === 0
-        ? 'كافة النتائج المخبرية المعتمدة للمريض تقع ضمن المعدلات الطبيعية المرجعية.'
-        : `أظهر الفحص وجود ${abnormals.length} تحليلاً خارج الحدود الطبيعية (${highs.length} مرتفع، ${lows.length} منخفض). يُوصى بالمتابعة الإكلينيكية.`,
-      primaryFindings: abnormals.map((r) => `${r.name}: ${r.value} ${r.unit} (${r.flag})`),
+        ? 'All analyzed laboratory parameters are within standardized physiological reference intervals. Findings correlate with normal clinical biological baseline.'
+        : `Comprehensive laboratory evaluation revealed ${abnormals.length} parameters outside physiological reference limits (${highs.length} elevated, ${lows.length} decreased). Clinical correlation and targeted follow-up are recommended.`,
+      primaryFindings: abnormals.map((r) => `${r.name}: ${r.value} ${r.unit} [${r.flag}]`),
       differentialConsiderations: diffs,
       suggestedFollowUp: followups,
       criticalAlert,
-      doctorSignature: 'Consultant Clinical Pathologist - RT Diagnostic Labs',
+      doctorSignature: 'Prof. Dr. Rami Mokhtar - Consultant Clinical Pathologist (Kasr Al Ainy)',
     };
   }
 

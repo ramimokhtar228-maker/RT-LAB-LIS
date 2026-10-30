@@ -384,7 +384,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                     {/* Patient Name */}
                     <div className="col-span-2">
                       <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">
-                        PATIENT NAME / اسم المريض
+                        PATIENT NAME
                       </span>
                       <span className="text-sm font-black text-slate-900 font-sans">
                         {patient.name}
@@ -699,7 +699,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                     .map((s) => (
                       <div key={s.id} className="space-y-1">
                         <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                          Medical Biochemist / الكيميائي
+                          Medical Biochemist
                         </div>
                         <div
                           style={{ height: `${s.signatureHeight || 38}px` }}
@@ -727,7 +727,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                     .map((s) => (
                       <div key={s.id} className="space-y-1">
                         <div className="text-[10px] font-bold uppercase text-[#8B1E3F] tracking-wider">
-                          Consultant Pathologist / استشاري الباثولوجيا
+                          Consultant Pathologist
                         </div>
                         <div
                           style={{ height: `${s.signatureHeight || 42}px` }}
@@ -744,7 +744,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                 {/* End of Page Bar with Page Numbering (Page X of Y) */}
                 <div className="mt-4 pt-2 border-t border-slate-200 text-center text-[9.5px] text-slate-400 font-mono flex items-center justify-between">
                   <span>RT LAB LIS • Sample ID: {patient.mrn}</span>
-                  <span>*** END OF {prof.code} PROFILE • نهاية تقرير البروفايل ***</span>
+                  <span>*** END OF {prof.code} PROFILE — OFFICIAL LABORATORY REPORT ***</span>
                   <span className="font-bold text-slate-700">
                     Page {currentPageNum} / {totalPages}
                   </span>
@@ -814,13 +814,13 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
               </div>
 
               {/* Smart Report Body */}
-              <div className="mt-5 space-y-4" dir="rtl">
+              <div className="mt-5 space-y-4" dir="ltr">
                 {/* Critical Alert if present */}
                 {clinicalInterpretation.criticalAlert && (
-                  <div className="bg-red-50 border-r-4 border-red-600 p-3.5 rounded-lg flex items-start gap-3 text-red-950 font-bold text-xs">
+                  <div className="bg-red-50 border-l-4 border-red-600 p-3.5 rounded-lg flex items-start gap-3 text-red-950 font-bold text-xs">
                     <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                     <div>
-                      <div className="font-black">تنبيه قيم حرجة (Critical Panic Value Alert):</div>
+                      <div className="font-black">CRITICAL PANIC VALUE ALERT:</div>
                       <p className="mt-0.5">{clinicalInterpretation.criticalAlert}</p>
                     </div>
                   </div>
@@ -831,7 +831,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                   <div className="flex items-center gap-2 border-b border-rose-200 pb-2">
                     <Sparkles className="w-4 h-4 text-[#8B1E3F]" />
                     <h4 className="text-xs font-black text-rose-950 uppercase tracking-wide">
-                      الخلاصة الإكلينيكية الشاملة (Executive Clinical Summary)
+                      EXECUTIVE CLINICAL PATHOLOGY SUMMARY
                     </h4>
                   </div>
                   <p className="text-xs text-slate-800 leading-relaxed font-medium">
@@ -844,7 +844,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                   <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
                     <h4 className="text-xs font-black text-slate-900 flex items-center gap-2">
                       <Activity className="w-4 h-4 text-rose-700" />
-                      <span>النتائج المخبرية غير الطبيعية المرصودة:</span>
+                      <span>Primary Abnormal Laboratory Findings:</span>
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                       {clinicalInterpretation.primaryFindings.map((finding, idx) => (
@@ -867,9 +867,9 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                     <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
                       <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                         <Stethoscope className="w-4 h-4 text-[#1e3a8a]" />
-                        <span>التشخيص التفريقي المحتمل:</span>
+                        <span>Differential Diagnostic Considerations:</span>
                       </h4>
-                      <ul className="space-y-1.5 text-xs text-slate-700 list-disc pr-4">
+                      <ul className="space-y-1.5 text-xs text-slate-700 list-disc pl-4">
                         {clinicalInterpretation.differentialConsiderations.map((item, idx) => (
                           <li key={idx} className="leading-relaxed">
                             {item}
@@ -884,9 +884,9 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                     <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
                       <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                        <span>توصيات المتابعة والفحوصات التكميلية:</span>
+                        <span>Recommended Follow-up Investigations:</span>
                       </h4>
-                      <ul className="space-y-1.5 text-xs text-slate-700 list-disc pr-4">
+                      <ul className="space-y-1.5 text-xs text-slate-700 list-disc pl-4">
                         {clinicalInterpretation.suggestedFollowUp.map((item, idx) => (
                           <li key={idx} className="leading-relaxed">
                             {item}
@@ -915,7 +915,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
                   .map((s) => (
                     <div key={s.id} className="space-y-1 text-center">
                       <div className="text-[10px] font-bold uppercase text-[#8B1E3F] tracking-wider">
-                        Consultant Pathologist / استشاري الباثولوجيا الإكلينيكية
+                        Consultant Pathologist &amp; Clinical Pathology
                       </div>
                       <div
                         style={{ height: `${s.signatureHeight || 42}px` }}
@@ -932,7 +932,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
               {/* End of Report notice */}
               <div className="mt-4 pt-2 border-t border-slate-200 text-center text-[9.5px] text-slate-400 font-mono flex items-center justify-between">
                 <span>RT LAB LIS • Sample ID: {patient.mrn}</span>
-                <span>*** FINAL CLINICAL CONSULTATION PAGE • التقرير الذكي المعتمد ***</span>
+                <span>*** OFFICIAL CLINICAL DECISION SUPPORT &amp; PATHOLOGY REPORT ***</span>
                 <span className="font-bold text-slate-700">
                   Page {totalPages} / {totalPages}
                 </span>

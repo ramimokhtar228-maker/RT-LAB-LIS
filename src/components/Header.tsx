@@ -179,7 +179,10 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Cpu className="w-3.5 h-3.5 text-blue-400" />
-            <span>الأجهزة والكتالوج الطبي</span>
+            <span>كتالوج الـ 412 تحليل والأجهزة</span>
+            <span className="bg-emerald-950 text-emerald-300 px-1.5 py-0.2 rounded-full text-[10px] font-mono border border-emerald-700/60">
+              412 Tests
+            </span>
           </button>
         </nav>
       </div>

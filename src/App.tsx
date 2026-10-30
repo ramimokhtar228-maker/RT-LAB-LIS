@@ -63,11 +63,17 @@ export default function App() {
     }
   });
 
-  // 2. Catalogs state
+  // 2. Catalogs state (Guarantees complete 412 tests catalog)
   const [testsCatalog, setTestsCatalog] = useState<TestCatalogItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TESTS);
-      return saved ? JSON.parse(saved) : DEFAULT_TESTS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= 400) {
+          return parsed;
+        }
+      }
+      return DEFAULT_TESTS;
     } catch {
       return DEFAULT_TESTS;
     }
@@ -301,6 +307,29 @@ export default function App() {
         status: 'Results Entered',
       };
     });
+  };
+
+  // 1b. Profile Comments & Clinical Recommendations
+  const handleUpdateProfileComment = (profileCode: string, comment: string) => {
+    if (!currentEncounter) return;
+    updateCurrentEncounter((enc) => ({
+      ...enc,
+      profileComments: {
+        ...(enc.profileComments || {}),
+        [profileCode]: comment,
+      },
+    }));
+  };
+
+  const handleUpdateProfileRecommendedTests = (profileCode: string, testCodes: string[]) => {
+    if (!currentEncounter) return;
+    updateCurrentEncounter((enc) => ({
+      ...enc,
+      profileRecommendedTests: {
+        ...(enc.profileRecommendedTests || {}),
+        [profileCode]: testCodes,
+      },
+    }));
   };
 
   // 2. Add / Toggle / Remove tests
@@ -656,18 +685,24 @@ export default function App() {
               </div>
             )}
 
-            {/* Results Entry Grid */}
+            {/* Results Entry Grid (Profile-by-Profile with Comments & Follow-up Recommendations) */}
             {currentEncounter && (
               <ResultsEntryGrid
                 patient={currentEncounter.patient}
                 selectedTestCodes={currentEncounter.selectedTestCodes}
                 results={currentEncounter.results}
                 catalogMap={catalogMap}
+                profilesCatalog={profilesCatalog}
+                profileComments={currentEncounter.profileComments}
+                profileRecommendedTests={currentEncounter.profileRecommendedTests}
                 onResultChange={handleResultChange}
                 onRemoveTest={handleRemoveTest}
                 onOpenTestSelector={() => setTestDrawerOpen(true)}
                 onFillDemoNormal={handleFillDemoNormal}
                 onFillDemoAbnormal={handleFillDemoAbnormal}
+                onUpdateProfileComment={handleUpdateProfileComment}
+                onUpdateProfileRecommendedTests={handleUpdateProfileRecommendedTests}
+                onAddTestToEncounter={(code) => handleAddTests([code])}
               />
             )}
           </div>

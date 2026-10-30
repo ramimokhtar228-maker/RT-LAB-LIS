@@ -47,7 +47,7 @@ export const CatalogManager: React.FC<CatalogManagerProps> = ({
   onUpdateDevicesCatalog,
   onResetToDefaults,
 }) => {
-  const [tab, setTab] = useState<'devices' | 'tests' | 'profiles' | 'packages'>('devices');
+  const [tab, setTab] = useState<'devices' | 'tests' | 'profiles' | 'packages'>('tests');
   const [search, setSearch] = useState('');
 
   // Devices state
@@ -157,13 +157,13 @@ export const CatalogManager: React.FC<CatalogManagerProps> = ({
           </div>
           <div>
             <h2 className="text-base font-bold flex items-center gap-2">
-              <span>إدارة الأجهزة المعملية والكتالوج الطبي المعتمد</span>
+              <span>كتالوج التحاليل الطبية الشامل (412 فحص) والأجهزة</span>
               <span className="text-[10px] bg-emerald-900 text-emerald-300 px-2.5 py-0.5 rounded-full font-mono">
-                {devices.length} أجهزة معملية
+                {testsCatalog.length} تحليل معتمد
               </span>
             </h2>
             <p className="text-xs text-slate-400">
-              إضافة وتعديل الأجهزة والتحاليل، تصغير وتوسيع الأجهزة، وزر الحذف النهائي الآمن
+              كتالوج الفحوصات التشخيصية الـ 412 كاملة ومحدثة مع النطاقات المرجعية وحسابات CDS الذكية
             </p>
           </div>
         </div>
@@ -171,15 +171,16 @@ export const CatalogManager: React.FC<CatalogManagerProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
-              if (confirm('هل تريد استعادة الكتالوج والأجهزة الافتراضية لمعامل RT؟')) {
+              if (confirm('هل تريد استعادة كتالوج الـ 412 تحليل الطبي بالكامل والأجهزة لمعامل RT؟')) {
                 onResetToDefaults();
                 updateDevices(DEFAULT_LAB_DEVICES);
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-900 hover:bg-rose-800 text-white text-xs font-bold border border-rose-700 transition-colors shadow-sm cursor-pointer"
+            title="استعادة كتالوج الـ 412 تحليل بالكامل مع التحديثات"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>استعادة الافتراضي</span>
+            <RotateCcw className="w-3.5 h-3.5 text-rose-300" />
+            <span>🔄 استعادة كتالوج الـ 412 تحليل بالكامل</span>
           </button>
 
           {tab === 'devices' ? (

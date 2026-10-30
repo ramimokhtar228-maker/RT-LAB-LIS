@@ -5,52 +5,93 @@ import { PatientEncounter, LabSettings, TestCatalogItem } from '../types/lab';
 import { getFlagDisplayInfo } from './calculations';
 
 /**
- * Direct PDF Export from report element
+ * Ideal Multi-Page PDF Export: Renders each lab profile on its own separate A4 page
+ * Prevents horizontal row slicing and guarantees pristine medical formatting.
  */
 export async function exportReportToPdf(elementId: string, encounter: PatientEncounter): Promise<void> {
-  const element = document.getElementById(elementId);
-  if (!element) {
-    throw new Error('Report element not found');
+  const container = document.getElementById(elementId);
+  if (!container) {
+    throw new Error('Report container element not found');
   }
 
-  // Create canvas from DOM element
-  const canvas = await html2canvas(element, {
-    scale: 2, // High resolution
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-  });
+  // Find all individual pages: .profile-page and .smart-report-page
+  const pageElements = Array.from(
+    container.querySelectorAll<HTMLElement>('.profile-page, .smart-report-page')
+  );
 
-  const imgData = canvas.toDataURL('image/png');
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
+    compress: true,
   });
 
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-  const imgWidth = pdfWidth;
-  const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+  const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+  const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
+  const margin = 5; // 5mm safe margins
+  const targetWidth = pdfWidth - margin * 2; // 200mm
+  const targetHeight = pdfHeight - margin * 2; // 287mm
 
-  let heightLeft = imgHeight;
-  let position = 0;
+  if (pageElements.length > 0) {
+    for (let i = 0; i < pageElements.length; i++) {
+      const pageEl = pageElements[i];
 
-  // Add first page
-  pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-  heightLeft -= pdfHeight;
+      // Add a fresh page for each subsequent profile
+      if (i > 0) {
+        pdf.addPage('a4', 'portrait');
+      }
 
-  // Add subsequent pages if report exceeds A4 height
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight;
-    pdf.addPage();
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-    heightLeft -= pdfHeight;
+      const canvas = await html2canvas(pageEl, {
+        scale: 2.2, // Ultra-sharp medical resolution
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 1180, // Consistent desktop preview width
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.96);
+      const canvasAspect = canvas.width / canvas.height;
+
+      let renderW = targetWidth;
+      let renderH = targetWidth / canvasAspect;
+
+      // Fit within A4 height
+      if (renderH > targetHeight) {
+        renderH = targetHeight;
+        renderW = targetHeight * canvasAspect;
+      }
+
+      // Center horizontally on page
+      const posX = margin + (targetWidth - renderW) / 2;
+      const posY = margin + (targetHeight - renderH) / 2;
+
+      pdf.addImage(imgData, 'JPEG', posX, posY, renderW, renderH, undefined, 'FAST');
+    }
+  } else {
+    // Fallback if no .profile-page elements
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const canvasAspect = canvas.width / canvas.height;
+    let renderW = targetWidth;
+    let renderH = targetWidth / canvasAspect;
+    if (renderH > targetHeight) {
+      renderH = targetHeight;
+      renderW = targetHeight * canvasAspect;
+    }
+    const posX = margin + (targetWidth - renderW) / 2;
+    const posY = margin + (targetHeight - renderH) / 2;
+    pdf.addImage(imgData, 'JPEG', posX, posY, renderW, renderH, undefined, 'FAST');
   }
 
   const safeName = (encounter.patient.name || 'Patient').replace(/[\s/\\?%*:|"<>]/g, '_');
   pdf.save(`RT-Lab-Report-${encounter.patient.mrn}-${safeName}.pdf`);
 }
+
 
 /**
  * Direct PowerPoint (.pptx) Presentation Export for Clinical Case Presentations & Meetings

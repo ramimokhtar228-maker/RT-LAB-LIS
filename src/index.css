@@ -14,43 +14,84 @@
 
 @media print {
   @page {
-    size: A4;
-    margin: 8mm 8mm 8mm 8mm;
+    size: A4 portrait;
+    margin: 6mm;
   }
   
-  body {
+  html, body {
     background: #ffffff !important;
     color: #000000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* Page Break controls */
+  /* Hide app navigation, headers, drawers, buttons */
+  header, nav, aside, .no-print, .print\:hidden, button {
+    display: none !important;
+  }
+
+  /* Each profile on a separate paper */
   .profile-page {
-    page-break-after: always;
-    break-after: page;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 0 10mm 0 !important;
+    padding: 6mm !important;
+    width: 100% !important;
+    min-height: 280mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
   }
 
   .profile-page:last-child {
-    page-break-after: auto;
-    break-after: auto;
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   .smart-report-page {
-    page-break-before: always;
-    break-before: page;
+    page-break-before: always !important;
+    break-before: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 6mm !important;
+    width: 100% !important;
+    min-height: 280mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
   }
 
   .avoid-break {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
-  /* Hide scrollbars & non-print elements */
+  /* Table borders in print */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  
+  th, td {
+    border-color: #cbd5e1 !important;
+  }
+
+  /* Hide scrollbars */
   ::-webkit-scrollbar {
-    display: none;
+    display: none !important;
   }
 }
+
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
