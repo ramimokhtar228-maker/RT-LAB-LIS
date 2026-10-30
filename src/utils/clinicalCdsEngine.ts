@@ -189,7 +189,7 @@ export function analyzeProfileClinicalCds(
         recommendedTestsSet.add('FIB4');
         recommendedTestsSet.add('US_ABD');
         recommendedTestsSet.add('AFP');
-      } else if (alt > 300) {
+      } else if (alt !== null && alt > 300) {
         diagnosticClues.push(`Marked acute hepatocellular necrosis (ALT > 300 U/L): Viral hepatitis or toxic/ischemic injury.`);
         suggestedInterpretation = `Marked acute hepatocellular transaminase elevation (ALT: ${alt} U/L). Strongly indicates acute viral hepatitis, toxic/drug-induced hepatotoxicity, or ischemic liver injury. Urgent viral serology indicated.`;
         recommendedTestsSet.add('HBSAG');

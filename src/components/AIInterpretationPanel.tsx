@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PatientEncounter, LabSettings, TestCatalogItem } from '../types/lab';
+import { PatientEncounter, LabSettings, TestCatalogItem, PatientTestResult } from '../types/lab';
 import { Sparkles, AlertTriangle, ShieldCheck, CheckCircle2, RefreshCw, FileText, ArrowRight, Stethoscope } from 'lucide-react';
 
 interface AIInterpretationPanelProps {
